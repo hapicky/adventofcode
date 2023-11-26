@@ -1,6 +1,5 @@
+from collections import deque
 import sys
-
-sys.setrecursionlimit(10**9)
 
 # 地図（入力）
 cavern = []
@@ -44,6 +43,8 @@ for ty in range(TIMES):
 min_risks = [[float('inf')] * full_width for _ in range(full_height)]
 min_risks[0][0] = 0
 
+q = deque()
+
 def visit(y, x, cur_risk):
     neighbors = []
 
@@ -63,14 +64,26 @@ def visit(y, x, cur_risk):
     if y > 1:
         neighbors.append((y-1, x))
     
+    next_visits = []
+
     for ny, nx in neighbors:
         risk = full_cavern[ny][nx]
         sum_risk = cur_risk + risk
         if sum_risk < min_risks[ny][nx]:
             min_risks[ny][nx] = sum_risk
-            visit(ny, nx, sum_risk)
+            next_visits.append((ny, nx, sum_risk))
+    
+    return next_visits
 
-visit(0, 0, 0)
+
+q.append((0, 0, 0))
+
+while len(q) > 0:
+    y, x, cur_risk = q.popleft()
+
+    next_visits = visit(y, x, cur_risk)
+    for n in next_visits:
+        q.append(n)
 
 ans = min_risks[full_height-1][full_width-1]
 print(ans)
