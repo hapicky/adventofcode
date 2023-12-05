@@ -79,6 +79,7 @@ def do_map(source, mappings):
                     # source        |---|
                     # mapping |---|
                     if i == len(mappings) - 1:
+                        # 最後のマッピングだったらそのまま結果として返す
                         result.append((s, e))
                         # print('result:', result)
                     else:
