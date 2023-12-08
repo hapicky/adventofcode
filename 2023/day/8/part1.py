@@ -2,7 +2,6 @@ from sys import stdin
 from collections import defaultdict
 
 nodes = defaultdict(dict)
-cur = None
 
 for i, line in enumerate(stdin):
     if i == 0:
@@ -18,10 +17,9 @@ for i, line in enumerate(stdin):
 
     nodes[k]['L'] = l
     nodes[k]['R'] = r
-    if cur is None:
-        cur = k
 
 step = 0
+cur = 'AAA'
 while cur != 'ZZZ':
     direction = directions[step % len(directions)]
     cur = nodes[cur][direction]
