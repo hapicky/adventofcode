@@ -1,134 +1,179 @@
-import sys
-from collections import defaultdict
+from sys import stdin
 
-sys.setrecursionlimit(10**8)
+# 入力
+rows = []
+for y, line in enumerate(stdin):
+    row = list(line.rstrip())
+    rows.append(row)
 
-# 入力の読み込み
-tiles = []
-for line in sys.stdin:
-    tiles.append(list(line.rstrip()))
+    # スタート地点の特定
+    if 'S' in row:
+        sx = row.index('S')
+        sy = y
 
-# 幅と高さ
-width = len(tiles[0])
-height = len(tiles)
-
-# 処理しやすいように上下左右を拡張
-for tile in tiles:
-    tile.insert(0, '.')
-    tile.append('.')
-
-tiles.insert(0, ['.'] * (width+2))
-tiles.append(['.'] * (width+2))
-
-# 自身から見てつながる相手
 upper_joints = ['|', '7', 'F', 'S']
-lower_joints = ['|', 'L', 'J', 'S']
-right_joints = ['-', 'J', '7', 'S']
 left_joints = ['-', 'L', 'F', 'S']
 
-# 経路を探す
-routes = defaultdict(list)
-start = None
+# 隙間ができるように各行各列の間に挿入する
+# 行
+t = len(rows) + 1
+for i in range(t):
+    row = [' '] * len(rows[0])
+    y = i * 2
 
-for y in range(1, height+1):
-    for x in range(1, width+1):
-        cur = (x, y)
-        c = tiles[y][x]
+    if y == 0:
+        rows.insert(y, row)
+        continue
 
-        if c == '|':
-            # 上
-            if tiles[y-1][x] in upper_joints:
-                routes[cur].append((x, y-1))
-            # 下
-            if tiles[y+1][x] in lower_joints:
-                routes[cur].append((x, y+1))
+    for x in range(len(row)):
+        if rows[y-1][x] in upper_joints:
+            row[x] = '|'
 
-        elif c == '-':
-            # 右
-            if tiles[y][x+1] in right_joints:
-                routes[cur].append((x+1, y))
-            # 左
-            if tiles[y][x-1] in left_joints:
-                routes[cur].append((x-1, y))
+    rows.insert(y, row)
 
-        elif c == 'L':
-            # 上
-            if tiles[y-1][x] in upper_joints:
-                routes[cur].append((x, y-1))
-            # 右
-            if tiles[y][x+1] in right_joints:
-                routes[cur].append((x+1, y))
+# 列
+t = len(rows[0]) + 1
+for row in rows:
+    for i in range(t):
+        x = i * 2
+        col = ' '
 
-        elif c == 'J':
-            # 上
-            if tiles[y-1][x] in upper_joints:
-                routes[cur].append((x, y-1))
-            # 左
-            if tiles[y][x-1] in left_joints:
-                routes[cur].append((x-1, y))
+        if x > 0 and row[x-1] in left_joints:
+            col = '-'
+        
+        row.insert(x, col)
 
-        elif c == '7':
-            # 下
-            if tiles[y+1][x] in lower_joints:
-                routes[cur].append((x, y+1))
-            # 左
-            if tiles[y][x-1] in left_joints:
-                routes[cur].append((x-1, y))
+# スタート地点の調整
+sx = sx * 2 + 1
+sy = sy * 2 + 1
 
-        elif c == 'F':
-            # 右
-            if tiles[y][x+1] in right_joints:
-                routes[cur].append((x+1, y))
-            # 下
-            if tiles[y+1][x] in lower_joints:
-                routes[cur].append((x, y+1))
+# for row in rows:
+#     print(''.join(row))
 
-        elif c == 'S':
-            start = (x, y)
-            # 上
-            if tiles[y-1][x] in upper_joints:
-                routes[cur].append((x, y-1))
-            # 右
-            if tiles[y][x+1] in right_joints:
-                routes[cur].append((x+1, y))
-            # 下
-            if tiles[y+1][x] in lower_joints:
-                routes[cur].append((x, y+1))
-            # 左
-            if tiles[y][x-1] in left_joints:
-                routes[cur].append((x-1, y))
+width = len(rows[0])
+height = len(rows)
 
-visited = defaultdict(bool)
-# 各行、各列でループ上にある場合はTrue
-on_the_loop_row = [[False] * (width+2) for _ in range(height+2)]
-on_the_loop_col = [[False] * (height+2) for _ in range(width+2)]
+# 訪問済
+visited = [[False] * width for _ in range(height)]
 
-def visit(point):
-    visited[point] = True
-    # 各行、各列でループ上にある位置にTrueをマークする
-    on_the_loop_row[point[1]][point[0]] = True
-    on_the_loop_col[point[0]][point[1]] = True
+# 各方向のx, y増分
+directions = {
+    'up': (0, -1),
+    'down': (0, 1),
+    'left': (-1, 0),
+    'right': (1, 0),
+}
 
-    for nex in routes[point]:
-        if not visited[nex]:
-            visit(nex)
+# 自身から見てつながる相手
+joints = {
+    '|': {
+        'up': ['|', '7', 'F', 'S'],
+        'down': ['|', 'L', 'J', 'S'],
+    },
+    '-': {
+        'left': ['-', 'L', 'F', 'S'],
+        'right': ['-', 'J', '7', 'S'],
+    },
+    'L': {
+        'up': ['|', '7', 'F', 'S'],
+        'right': ['-', 'J', '7', 'S'],
+    },
+    'J': {
+        'up': ['|', '7', 'F', 'S'],
+        'left': ['-', 'L', 'F', 'S'],
+    },
+    '7': {
+        'down': ['|', 'L', 'J', 'S'],
+        'left': ['-', 'L', 'F', 'S'],
+    },
+    'F': {
+        'down': ['|', 'L', 'J', 'S'],
+        'right': ['-', 'J', '7', 'S'],
+    },
+    'S': {
+        'up': ['|', '7', 'F'],
+        'down': ['|', 'L', 'J'],
+        'left': ['-', 'L', 'F'],
+        'right': ['-', 'J', '7'],
+    },
+}
 
-visit(start)
+q = []
+
+# ループ上を訪問
+def visit_on_the_loop(x, y):
+    joint = joints[rows[y][x]]
+
+    # 自身がつながる各方向を見る
+    for dir in joint.keys():
+        px, py = directions[dir]
+        nx = x + px
+        ny = y + py
+
+        if nx < 0 or width <= nx or ny < 0 or height <= ny:
+            continue
+
+        if visited[ny][nx]:
+            continue
+
+        # 行先がつながる相手なら訪問
+        if rows[ny][nx] in joint[dir]:
+            visited[ny][nx] = True
+            q.append((nx, ny))
+
+
+# スタート地点からループ上を訪問する
+visited[sy][sx] = True
+q.append((sx, sy))
+
+while len(q) > 0:
+    x, y = q.pop(0)
+    visit_on_the_loop(x, y)
+
+
+# ループ上にないジャンクパイプは「.」に置き換える
+for y, row in enumerate(rows):
+    for x, col in enumerate(row):
+        if col != ' ' and col != '.' and not visited[y][x]:
+            if y % 2 == 0 or x % 2 == 0:
+                # ただし隙間を開けるために挿入した箇所は空白にする
+                rows[y][x] = ' '
+            else:
+                rows[y][x] = '.'
+
+# 外側を訪問
+def visit_outside(x, y):
+    # 訪問された「.」は空白にしておく（外側から到達可能）
+    if rows[y][x] == '.':
+        rows[y][x] = ' '
+
+    for px, py in directions.values():
+        nx = x + px
+        ny = y + py
+
+        if nx < 0 or width <= nx or ny < 0 or height <= ny:
+            continue
+
+        if visited[ny][nx]:
+            continue
+
+        if rows[ny][nx] != ' ' and rows[ny][nx] != '.':
+            continue
+
+        visited[ny][nx] = True
+        q.append((nx, ny))
+
+
+visited[0][0] = True
+q.append((0, 0))
+
+while len(q) > 0:
+    x, y = q.pop(0)
+    visit_outside(x, y)
 
 ans = 0
-for y in range(1, height+1):
-    for x in range(1, width+1):
-        c = tiles[y][x]
-        if c != '.':
-            continue
-        
-        left_pipe_mod = sum(on_the_loop_row[y][:x]) % 2
-        right_pipe_mod = sum(on_the_loop_row[y][x+1:]) % 2
-        upper_pipe_mod = sum(on_the_loop_col[x][:y]) % 2
-        lower_pipe_mod = sum(on_the_loop_col[x][y+1:]) % 2
-
-        # 外側にあるパイプが奇数であれば内側？と思ったが違うようだ
-        if left_pipe_mod == 1 and right_pipe_mod == 1 and upper_pipe_mod == 1 and lower_pipe_mod == 1:
-            ans += 1
+for row in rows:
+    # print(''.join(row))
+    ans += row.count('.')
 
 print(ans)
