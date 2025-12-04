@@ -1,18 +1,20 @@
 from sys import stdin
 
 def largest_joltage(bank):
-    batteries = [bank[-2], bank[-1]]
+    batteries = []
+    SIZE = 2
 
-    for i in range(len(bank) - 3, -1, -1):
-        prev_battery = bank[i]
+    l = 0
+    for i in range(SIZE):
+        r = len(bank) - SIZE + i
+        candidates = bank[l:r+1]
 
-        for j in range(len(batteries)):
-            if prev_battery >= batteries[j]:
-                tmp_battery = batteries[j]
-                batteries[j] = prev_battery
-                prev_battery = tmp_battery
-            else:
-                break
+        # take the max digit from the left
+        jolt = max(candidates)
+        batteries.append(jolt)
+
+        # shift the next start position
+        l += candidates.index(jolt) + 1
 
     largest = int(''.join(batteries))
     return largest
