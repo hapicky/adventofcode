@@ -32,7 +32,7 @@ def find_root(i):
     return root
 
 # connect junctions
-for dist_sq, j1, j2 in distances:
+for _, j1, j2 in distances:
     j1_root = find_root(j1)
     j2_root = find_root(j2)
 
